@@ -36,6 +36,8 @@ if side != st.session_state.player_side or not st.session_state.initialized:
 difficulty = st.selectbox("Select Difficulty", ["Easy", "Medium", "Hard"])
 depth = {"Easy": 1, "Medium": 2, "Hard": 3}[difficulty]
 
+st.markdown("Press 'enter' once to make your move and then again for the ai to make it's move")
+
 # Draw board
 def show_board():
     board_svg = chess.svg.board(
