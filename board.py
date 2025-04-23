@@ -27,6 +27,9 @@ if side != st.session_state.player_side:
     st.session_state.board = chess.Board()
     st.experimental_rerun()
 
+
+difficulty = st.selectbox("Select Difficulty", ["Easy", "Medium", "Hard"])
+
 # Display board
 def show_board():
     board_svg = chess.svg.board(
@@ -40,10 +43,16 @@ def show_board():
 def make_ai_move():
     if st.session_state.board.turn != (st.session_state.player_side == "White") \
             and not st.session_state.board.is_game_over():
+        if difficulty == "Easy":
+            depth = 1
+        elif difficulty == "Medium":
+            depth = 2
+        else:
+            depth = 3
         with st.spinner("AI is thinking..."):
             ai_move = ai.find_best_move(
                 st.session_state.board,
-                depth=3,
+                depth,
                 strength_of_pieces=evaluation.strength_of_pieces
             )
             if ai_move:
