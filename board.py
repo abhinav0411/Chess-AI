@@ -4,7 +4,6 @@ import chess.svg
 import ai 
 import evaluation
 import streamlit.components.v1 as components
-from streamlit.runtime.scriptrunner import rerun
 
 st.set_page_config(layout="wide")
 st.title("Play Chess vs AI")
@@ -26,7 +25,10 @@ side = st.radio("Choose your side:", ["White", "Black"], horizontal=True)
 if side != st.session_state.player_side:
     st.session_state.player_side = side
     st.session_state.board = chess.Board()
-    rerun()
+    try:
+        st.experimental_rerun()
+    except Exception:
+        st.warning("Could not rerun the app (feature not supported in this environment).")
 
 
 difficulty = st.selectbox("Select Difficulty", ["Easy", "Medium", "Hard"])
