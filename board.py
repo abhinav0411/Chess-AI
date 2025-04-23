@@ -34,28 +34,42 @@ def make_ai_move():
                 st.session_state.board.push(ai_move)
                 st.experimental_rerun()
 
-# Human move handling (UCI input)
-def handle_human_move():
-    human_move = st.text_input("Your Move (UCI format, e.g. e7e5):", key="move_input")
-    if st.button("Make Move"):
-        try:
-            move = chess.Move.from_uci(human_move.strip().lower())
-            if move in st.session_state.board.legal_moves:
-                st.session_state.board.push(move)
-                st.experimental_rerun()
-            else:
-                st.error("Illegal move. Check possible moves.")
-        except ValueError:
-            st.error("Invalid UCI format. Use like 'e7e5' or 'g1f3'")
+# Main layout: two columns
+left_col, right_col = st.columns([2, 1])
 
-# Main flow
-show_board()
+# Left column: board and move input
+with left_col:
+    show_board()
 
-# Handle AI move first if it's White's turn
+    # Human move handling (UCI input with Enter support)
+    with st.form("move_form", clear_on_submit=True):
+        human_move = st.text_input("Your Move (UCI format, e.g. e7e5):", key="move_input")
+        submitted = st.form_submit_button("Make Move")
+        if submitted:
+            try:
+                move = chess.Move.from_uci(human_move.strip().lower())
+                if move in st.session_state.board.legal_moves:
+                    st.session_state.board.push(move)
+                    st.experimental_rerun()
+                else:
+                    st.error("Illegal move. Check possible moves.")
+            except ValueError:
+                st.error("Invalid UCI format. Use like 'e7e5' or 'g1f3'")
+
+# Right column: move history
+with right_col:
+    st.subheader("Move History")
+    moves = list(st.session_state.board.move_stack)
+    move_list = []
+    for i in range(0, len(moves), 2):
+        white_move = moves[i].uci()
+        black_move = moves[i + 1].uci() if i + 1 < len(moves) else ""
+        move_list.append(f"{(i // 2) + 1}. {white_move} {black_move}")
+    st.markdown("\n".join(move_list))
+
+# Handle AI move if it's white's turn
 if st.session_state.board.turn == chess.WHITE:
     make_ai_move()
-else:
-    handle_human_move()
 
 # Game status
 if st.session_state.board.is_game_over():

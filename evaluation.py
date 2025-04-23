@@ -21,6 +21,28 @@ def king_safety(board, square):
     return safety
 
 
+# Function to check endgame and starting
+def state_of_board(board, state):
+    count_minor = 0
+    count_queen = 0
+    for i in board.board_fen():
+        if (i != "q" or i != "Q") and (i != "p" or i != "P"):
+            count_minor += 1
+        elif i == "q" or i == "Q":
+            count_queen += 1
+    if (count_queen == 0 and count_minor <= 4) or (count_queen == 1 and count_minor <= 2):
+        return 0
+    else:
+        return 1
+    
+        
+
+# Function to move pieces based on if we are in the endgame or start
+# Function to look for checks
+# Function to motivate the engine to check
+# 
+
+
 # Function to look at isolated pawns
 def isolated_pawns(board, square):
     not_isolated = 0
@@ -32,6 +54,7 @@ def isolated_pawns(board, square):
                 not_isolated += 0.3
     return not_isolated
 
+# Function to count pieces
 def count_pieces(board, strength_of_pieces):
     strength = 0
     for i in board.board_fen():
@@ -39,7 +62,7 @@ def count_pieces(board, strength_of_pieces):
             strength += strength_of_pieces[i]
     return strength
 
-#
+# Evalutation function
 def evaluate(board, strength_of_pieces):
     strength = count_pieces(board, strength_of_pieces)
     
