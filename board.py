@@ -22,13 +22,13 @@ evaluation.strength_of_pieces = {
 
 # Side selection (resets game if changed)
 side = st.radio("Choose your side:", ["White", "Black"], horizontal=True)
-if side != st.session_state.player_side:
+if 'initialized' not in st.session_state:
+    st.session_state.initialized = False
+
+if side != st.session_state.get("player_side") or not st.session_state.initialized:
     st.session_state.player_side = side
     st.session_state.board = chess.Board()
-    try:
-        st.experimental_rerun()
-    except Exception:
-        st.warning("Could not rerun the app (feature not supported in this environment).")
+    st.session_state.initialized = True
 
 
 difficulty = st.selectbox("Select Difficulty", ["Easy", "Medium", "Hard"])
