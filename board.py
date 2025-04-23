@@ -8,22 +8,38 @@ import streamlit.components.v1 as components
 st.set_page_config(layout="wide")
 st.title("Play Chess vs AI")
 
-# Initialize board and piece values
+# Initialize session state
 if "board" not in st.session_state:
     st.session_state.board = chess.Board()
-    evaluation.strength_of_pieces = {
-        "p": -1, "n": -3, "b": -3, "r": -5, "q": -9, "k": -10,
-        "P": 1, "N": 3, "B": 3, "R": 5, "Q": 9, "K": 10
-    }
+if "player_side" not in st.session_state:
+    st.session_state.player_side = "Black"  # Default is Black so AI goes first
+
+# Evaluation strength
+evaluation.strength_of_pieces = {
+    "p": -1, "n": -3, "b": -3, "r": -5, "q": -9, "k": -10,
+    "P": 1, "N": 3, "B": 3, "R": 5, "Q": 9, "K": 10
+}
+
+# Side selection (resets game if changed)
+side = st.radio("Choose your side:", ["White", "Black"], horizontal=True)
+if side != st.session_state.player_side:
+    st.session_state.player_side = side
+    st.session_state.board = chess.Board()
+    st.experimental_rerun()
 
 # Display board
 def show_board():
-    board_svg = chess.svg.board(st.session_state.board, size=400)
+    board_svg = chess.svg.board(
+        st.session_state.board,
+        size=400,
+        flipped=(st.session_state.player_side == "Black")
+    )
     components.html(board_svg, height=450)
 
 # AI move logic
 def make_ai_move():
-    if st.session_state.board.turn == chess.WHITE and not st.session_state.board.is_game_over():
+    if st.session_state.board.turn != (st.session_state.player_side == "White") \
+            and not st.session_state.board.is_game_over():
         with st.spinner("AI is thinking..."):
             ai_move = ai.find_best_move(
                 st.session_state.board,
@@ -34,27 +50,29 @@ def make_ai_move():
                 st.session_state.board.push(ai_move)
                 st.experimental_rerun()
 
-# Main layout: two columns
+# Layout: two columns
 left_col, right_col = st.columns([2, 1])
 
 # Left column: board and move input
 with left_col:
     show_board()
 
-    # Human move handling (UCI input with Enter support)
-    with st.form("move_form", clear_on_submit=True):
-        human_move = st.text_input("Your Move (UCI format, e.g. e7e5):", key="move_input")
-        submitted = st.form_submit_button("Make Move")
-        if submitted:
-            try:
-                move = chess.Move.from_uci(human_move.strip().lower())
-                if move in st.session_state.board.legal_moves:
-                    st.session_state.board.push(move)
-                    st.experimental_rerun()
-                else:
-                    st.error("Illegal move. Check possible moves.")
-            except ValueError:
-                st.error("Invalid UCI format. Use like 'e7e5' or 'g1f3'")
+    # Human move form (UCI format)
+    if st.session_state.board.turn == (st.session_state.player_side == "White") \
+            and not st.session_state.board.is_game_over():
+        with st.form("move_form", clear_on_submit=True):
+            human_move = st.text_input("Your Move (UCI format, e.g. e2e4):", key="move_input")
+            submitted = st.form_submit_button("Make Move")
+            if submitted:
+                try:
+                    move = chess.Move.from_uci(human_move.strip().lower())
+                    if move in st.session_state.board.legal_moves:
+                        st.session_state.board.push(move)
+                        st.experimental_rerun()
+                    else:
+                        st.error("Illegal move. Check possible moves.")
+                except ValueError:
+                    st.error("Invalid UCI format. Use like 'e2e4' or 'g1f3'")
 
 # Right column: move history
 with right_col:
@@ -67,9 +85,8 @@ with right_col:
         move_list.append(f"{(i // 2) + 1}. {white_move} {black_move}")
     st.markdown("\n".join(move_list))
 
-# Handle AI move if it's white's turn
-if st.session_state.board.turn == chess.WHITE:
-    make_ai_move()
+# AI move (if it's AI's turn)
+make_ai_move()
 
 # Game status
 if st.session_state.board.is_game_over():

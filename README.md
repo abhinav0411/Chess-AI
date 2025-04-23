@@ -1,2 +1,2 @@
 # Chess-AI
-A basic chess ai using alpha-beta pruning
+Chess ai made using alpha beta pruning
