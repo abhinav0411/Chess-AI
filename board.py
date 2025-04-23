@@ -60,7 +60,7 @@ def make_ai_move():
             )
             if ai_move:
                 st.session_state.board.push(ai_move)
-                st.experimental_rerun()
+                st.session_state.last_ai_move = True  
 
 # Layout: two columns
 left_col, right_col = st.columns([2, 1])
@@ -80,7 +80,7 @@ with left_col:
                     move = chess.Move.from_uci(human_move.strip().lower())
                     if move in st.session_state.board.legal_moves:
                         st.session_state.board.push(move)
-                        st.experimental_rerun()
+                        st.session_state.last_ai_move = True  
                     else:
                         st.error("Illegal move. Check possible moves.")
                 except ValueError:
@@ -105,4 +105,4 @@ if st.session_state.board.is_game_over():
     st.success(f"Game Over! Result: {st.session_state.board.result()}")
     if st.button("New Game"):
         st.session_state.board = chess.Board()
-        st.experimental_rerun()
+        st.session_state.last_ai_move = True  
