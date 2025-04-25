@@ -41,10 +41,16 @@ st.markdown("Press 'enter' once to make your move and then again for the ai to m
 # Draw board
 def show_board():
     board_svg = chess.svg.board(
-        st.session_state.board,
-        flipped=(st.session_state.player_side == "Black"),
-        size=400
-    )
+    board=st.session_state.board,
+    size=400,
+    flipped=(st.session_state.player_side == "Black"),
+    colors={
+        "square light": "#ffffff",  # light squares
+        "square dark": "#4e7837",   # dark squares
+        "square light lastmove": "#4e7837",  # highlight last move
+        "square dark lastmove": "4e7837"
+    }
+)
     components.html(board_svg, height=450)
 
 # AI move
@@ -97,8 +103,21 @@ if st.session_state.awaiting_ai and not st.session_state.board.is_game_over() \
     make_ai_move()
 
 # Endgame
+# Game status and alert
 if st.session_state.board.is_game_over():
-    st.success(f"Game Over! Result: {st.session_state.board.result()}")
+    result = st.session_state.board.result()
+    outcome = st.session_state.board.outcome()
+
+    if outcome.winner is None:
+        st.warning("Draw! Well played.")
+    elif outcome.winner and st.session_state.player_side == "White":
+        st.success("You Win! 🎉")
+    elif not outcome.winner and st.session_state.player_side == "Black":
+        st.success("You Win! 🎉")
+    else:
+        st.error("You Lose! Try again.")
+
     if st.button("New Game"):
         st.session_state.board = chess.Board()
-        st.session_state.awaiting_ai = (st.session_state.player_side == "Black")
+        st.session_state.initialized = False
+
