@@ -1,7 +1,7 @@
 import chess
 
 
-# Define directions manually
+# Define directions
 NORTH = 8
 SOUTH = -8
 EAST = 1
@@ -13,7 +13,6 @@ SOUTHWEST = SOUTH + WEST
 
 
 def king_safety(board, square):
-    """Evaluate how safe the king is by checking nearby friendly pieces."""
     safety = 0
     directions = [NORTH, NORTHEAST, EAST, SOUTHEAST,
                   SOUTH, SOUTHWEST, WEST, NORTHWEST]
@@ -48,11 +47,9 @@ def king_activity(board, square, is_endgame):
     file = chess.square_file(square)
 
     if is_endgame:
-        # Bonus for being near center
         center_distance = abs(3.5 - rank) + abs(3.5 - file)
-        return (4 - center_distance) * 0.2  # max 0.8 bonus
+        return (4 - center_distance) * 0.2 
     else:
-        # Penalize kings far from back rank (0 for white, 7 for black)
         back_rank = 0 if board.color_at(square) == chess.WHITE else 7
         rank_penalty = abs(rank - back_rank)
         return -0.4 * rank_penalty
@@ -61,7 +58,6 @@ def king_activity(board, square, is_endgame):
 def minor_piece_activity(square):
     rank = chess.square_rank(square)
     file = chess.square_file(square)
-    # Bonus for central control
     return 0.1 * (4 - abs(3.5 - rank)) * (4 - abs(3.5 - file)) / 4
 
 # Function to evaluate rook positioning
@@ -71,7 +67,6 @@ def rook_positioning(board, square):
     color = board.color_at(square)
     bonus = 0.0
 
-    # Check for open/semi-open file
     file_has_own_pawn = False
     file_has_enemy_pawn = False
     for r in range(8):
@@ -85,13 +80,11 @@ def rook_positioning(board, square):
     if not file_has_own_pawn:
         bonus += 0.3 if not file_has_enemy_pawn else 0.15
 
-    # Bonus for 7th rank pressure
     if (color == chess.WHITE and rank == 6) or (color == chess.BLACK and rank == 1):
         bonus += 0.2
 
     return bonus
 
-# Function to evaluate isolated pawns
 def isolated_pawns(board, square):
     not_isolated = 0
     file = chess.square_file(square)
@@ -144,16 +137,14 @@ def piece_activity(board):
     for square in chess.SQUARES:
         piece = board.piece_at(square)
         if piece:
-            # Give minor pieces a bonus for being on central squares
             if piece.piece_type in [chess.KNIGHT, chess.BISHOP]:
                 if square in [chess.D4, chess.D5, chess.E4, chess.E5]:
                     activity_score += 0.2 if piece.color == chess.WHITE else -0.2
-            # Encourage the Queen to be developed later in the game
             if piece.piece_type == chess.QUEEN:
-                if square in [chess.D1, chess.D8]:  # Queen on starting squares
-                    activity_score -= 0.5  # Penalize for underdeveloped Queen
+                if square in [chess.D1, chess.D8]:  
+                    activity_score -= 0.5  
                 else:
-                    activity_score += 0.1  # Bonus for Queen's activity
+                    activity_score += 0.1 
     return activity_score
 
 # Updated evaluate function
