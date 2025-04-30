@@ -36,21 +36,19 @@ if side != st.session_state.player_side or not st.session_state.initialized:
 difficulty = st.selectbox("Select Difficulty", ["Easy", "Medium", "Hard"])
 depth = {"Easy": 1, "Medium": 2, "Hard": 3}[difficulty]
 
-st.markdown("Press 'enter' once to make your move and then again for the ai to make it's move")
-
 # Draw board
 def show_board():
     board_svg = chess.svg.board(
-    board=st.session_state.board,
-    size=400,
-    flipped=(st.session_state.player_side == "Black"),
-    colors={
-        "square light": "#ffffff",  # light squares
-        "square dark": "#4e7837",   # dark squares
-        "square light lastmove": "#4e7837",  # highlight last move
-        "square dark lastmove": "4e7837"
-    }
-)
+        board=st.session_state.board,
+        size=400,
+        flipped=(st.session_state.player_side == "Black"),
+        colors={
+            "square light": "#ffffff",  # light squares
+            "square dark": "#4e7837",   # dark squares
+            "square light lastmove": "#4e7837",
+            "square dark lastmove": "#4e7837"
+        }
+    )
     components.html(board_svg, height=450)
 
 # AI move
@@ -63,30 +61,37 @@ def make_ai_move():
         )
         if move:
             st.session_state.board.push(move)
-    st.session_state.awaiting_ai = False
 
 # Layout
 left, right = st.columns([2, 1])
 
 with left:
-    show_board()
+    move_made = False
 
-    # If it's human's turn
-    if st.session_state.board.turn == (st.session_state.player_side == "White") \
-            and not st.session_state.board.is_game_over():
-        with st.form("move_form", clear_on_submit=True):
-            move_input = st.text_input("Your Move (e.g., e2e4):")
-            submit = st.form_submit_button("Make Move")
-            if submit:
-                try:
-                    move = chess.Move.from_uci(move_input.strip().lower())
-                    if move in st.session_state.board.legal_moves:
-                        st.session_state.board.push(move)
-                        st.session_state.awaiting_ai = True
-                    else:
-                        st.error("Illegal move.")
-                except:
-                    st.error("Invalid move format.")
+    if not st.session_state.board.is_game_over():
+        if st.session_state.board.turn == (st.session_state.player_side == "White"):
+            with st.form("move_form", clear_on_submit=True):
+                move_input = st.text_input("Your Move (e.g., e2e4):")
+                submit = st.form_submit_button("Make Move")
+                if submit:
+                    try:
+                        move = chess.Move.from_uci(move_input.strip().lower())
+                        if move in st.session_state.board.legal_moves:
+                            st.session_state.board.push(move)
+                            st.session_state.awaiting_ai = True
+                            move_made = True
+                        else:
+                            st.error("Illegal move.")
+                    except:
+                        st.error("Invalid move format.")
+
+    # AI move AFTER human move
+    if st.session_state.awaiting_ai and not st.session_state.board.is_game_over() \
+            and st.session_state.board.turn != (st.session_state.player_side == "White"):
+        make_ai_move()
+
+    # Now render board (after all move logic)
+    show_board()
 
 # Move history
 with right:
@@ -97,13 +102,7 @@ with right:
         b = history[i + 1].uci() if i + 1 < len(history) else ""
         st.markdown(f"{i//2 + 1}. {w} {b}")
 
-# Trigger AI move outside form
-if st.session_state.awaiting_ai and not st.session_state.board.is_game_over() \
-        and st.session_state.board.turn != (st.session_state.player_side == "White"):
-    make_ai_move()
-
-# Endgame
-# Game status and alert
+# Endgame status
 if st.session_state.board.is_game_over():
     result = st.session_state.board.result()
     outcome = st.session_state.board.outcome()
@@ -112,12 +111,13 @@ if st.session_state.board.is_game_over():
         st.warning("Draw! Well played.")
     elif outcome.winner and st.session_state.player_side == "White":
         st.success("You Win! 🎉")
+        st.balloons()
     elif not outcome.winner and st.session_state.player_side == "Black":
         st.success("You Win! 🎉")
+        st.balloons()
     else:
         st.error("You Lose! Try again.")
 
     if st.button("New Game"):
         st.session_state.board = chess.Board()
         st.session_state.initialized = False
-
